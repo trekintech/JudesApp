@@ -43,7 +43,7 @@ final class AudioManager: NSObject {
     private var currentRecordingURL: URL?
 
     /// Persistent recognizer — avoids cold-start model loading on each transcription
-    private lazy var speechRecognizer: SFSpeechRecognizer? = SFSpeechRecognizer()
+    private let speechRecognizer: SFSpeechRecognizer? = SFSpeechRecognizer()
 
     // MARK: - Audio Session
 
