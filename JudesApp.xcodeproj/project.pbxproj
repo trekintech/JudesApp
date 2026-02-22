@@ -351,6 +351,9 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "JudesApp needs camera access to scan book covers.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "JudesApp needs microphone access to record you reading stories.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "JudesApp uses speech recognition to create word-by-word transcriptions of your recordings for karaoke-style reading.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -382,6 +385,9 @@
 				INFOPLIST_FILE = JudesApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Jude's Stories";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_NSCameraUsageDescription = "JudesApp needs camera access to scan book covers.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "JudesApp needs microphone access to record you reading stories.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "JudesApp uses speech recognition to create word-by-word transcriptions of your recordings for karaoke-style reading.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
