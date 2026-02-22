@@ -4,6 +4,7 @@ import SwiftData
 struct StoryGridView: View {
     @Query(sort: \StoryBook.creationDate, order: .reverse) private var books: [StoryBook]
     @State private var selectedBook: StoryBook?
+    @State private var teachBook: StoryBook?
 
     var onAddBook: () -> Void
 
@@ -33,6 +34,9 @@ struct StoryGridView: View {
         .toolbarBackground(AppTheme.pale, for: .navigationBar)
         .fullScreenCover(item: $selectedBook) { book in
             PlaybackView(book: book)
+        }
+        .fullScreenCover(item: $teachBook) { book in
+            TeachModeView(book: book)
         }
     }
 
@@ -78,6 +82,18 @@ struct StoryGridView: View {
                 ForEach(books) { book in
                     BookCoverButton(book: book) {
                         selectedBook = book
+                    }
+                    .contextMenu {
+                        Button {
+                            selectedBook = book
+                        } label: {
+                            Label("Listen", systemImage: "play.circle")
+                        }
+                        Button {
+                            teachBook = book
+                        } label: {
+                            Label("Teach Mode", systemImage: "graduationcap")
+                        }
                     }
                 }
             }
