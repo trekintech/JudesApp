@@ -10,7 +10,6 @@ struct AddBookView: View {
     @State private var title = ""
     @State private var coverImageData: Data?
     @State private var showScanner = false
-    @State private var showImagePicker = false
     @State private var audioManager = AudioManager()
     @State private var recordingURL: URL?
     @State private var audioFileName: String?
@@ -36,6 +35,8 @@ struct AddBookView: View {
             recordingSection
             transcriptionSection
         }
+        .scrollContentBackground(.hidden)
+        .background(AppTheme.gridBackground.ignoresSafeArea())
         .navigationTitle("Add New Book")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -48,6 +49,7 @@ struct AddBookView: View {
                 Button("Save") {
                     saveBook()
                 }
+                .fontWeight(.semibold)
                 .disabled(!canSave)
             }
         }
@@ -66,27 +68,27 @@ struct AddBookView: View {
     // MARK: - Cover Section
 
     private var coverSection: some View {
-        Section("Book Cover") {
+        Section {
             HStack(spacing: 20) {
-                // Cover preview
                 if let data = coverImageData, let img = UIImage(data: data) {
                     Image(uiImage: img)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(height: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: AppTheme.cardShadow, radius: 8, y: 4)
                 } else {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(.quaternary)
+                        .fill(AppTheme.pale)
                         .frame(width: 150, height: 200)
                         .overlay {
                             VStack(spacing: 8) {
                                 Image(systemName: "camera.fill")
                                     .font(.largeTitle)
                                 Text("No Cover")
-                                    .font(.caption)
+                                    .font(.system(.caption, design: .rounded))
                             }
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.ocean.opacity(0.4))
                         }
                 }
 
@@ -95,9 +97,11 @@ struct AddBookView: View {
                         showScanner = true
                     } label: {
                         Label("Scan Cover", systemImage: "doc.viewfinder")
+                            .font(.system(.body, design: .rounded, weight: .medium))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.ocean)
 
                     if coverImageData != nil {
                         Button(role: .destructive) {
@@ -111,22 +115,28 @@ struct AddBookView: View {
                 }
             }
             .padding(.vertical, 8)
+        } header: {
+            Text("Book Cover")
+                .foregroundStyle(AppTheme.ocean)
         }
     }
 
     // MARK: - Title Section
 
     private var titleSection: some View {
-        Section("Title") {
+        Section {
             TextField("Book Title", text: $title)
-                .font(.title3)
+                .font(.system(.title3, design: .rounded))
+        } header: {
+            Text("Title")
+                .foregroundStyle(AppTheme.ocean)
         }
     }
 
     // MARK: - Recording Section
 
     private var recordingSection: some View {
-        Section("Audio Recording") {
+        Section {
             switch audioManager.recordingState {
             case .idle:
                 if audioFileName != nil {
@@ -134,6 +144,7 @@ struct AddBookView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                         Text("Recording saved")
+                            .font(.system(.body, design: .rounded))
                         Spacer()
                         Button("Re-record", role: .destructive) {
                             if let name = audioFileName {
@@ -151,7 +162,7 @@ struct AddBookView: View {
                         recordingURL = audioManager.startRecording()
                     } label: {
                         Label("Start Recording", systemImage: "mic.circle.fill")
-                            .font(.headline)
+                            .font(.system(.headline, design: .rounded))
                             .foregroundStyle(.red)
                     }
                 }
@@ -163,12 +174,11 @@ struct AddBookView: View {
                             .fill(.red)
                             .frame(width: 12, height: 12)
                         Text("Recording...")
-                            .font(.headline)
+                            .font(.system(.headline, design: .rounded))
                         Spacer()
                         Text(formatDuration(audioManager.recordingDuration))
                             .font(.system(.body, design: .monospaced))
                     }
-
                     HStack(spacing: 16) {
                         Button {
                             audioManager.pauseRecording()
@@ -194,12 +204,11 @@ struct AddBookView: View {
                         Image(systemName: "pause.circle")
                             .foregroundStyle(.orange)
                         Text("Paused")
-                            .font(.headline)
+                            .font(.system(.headline, design: .rounded))
                         Spacer()
                         Text(formatDuration(audioManager.recordingDuration))
                             .font(.system(.body, design: .monospaced))
                     }
-
                     HStack(spacing: 16) {
                         Button {
                             audioManager.resumeRecording()
@@ -219,13 +228,16 @@ struct AddBookView: View {
                 }
                 .padding(.vertical, 4)
             }
+        } header: {
+            Text("Audio Recording")
+                .foregroundStyle(AppTheme.ocean)
         }
     }
 
     // MARK: - Transcription Section
 
     private var transcriptionSection: some View {
-        Section("Transcription") {
+        Section {
             switch transcriptionStatus {
             case .idle:
                 if audioFileName != nil {
@@ -238,6 +250,7 @@ struct AddBookView: View {
             case .transcribing:
                 HStack {
                     ProgressView()
+                        .tint(AppTheme.ocean)
                     Text("Transcribing offline...")
                         .padding(.leading, 8)
                 }
@@ -254,6 +267,9 @@ struct AddBookView: View {
                     Text("Transcription failed. You can still save without karaoke text.")
                 }
             }
+        } header: {
+            Text("Transcription")
+                .foregroundStyle(AppTheme.ocean)
         }
     }
 
@@ -298,7 +314,6 @@ struct AddBookView: View {
     }
 
     private func cleanupAndDismiss() {
-        // Clean up recording if we haven't saved
         if let name = audioFileName {
             audioManager.deleteRecording(fileName: name)
         }
@@ -317,11 +332,9 @@ struct AddBookView: View {
             guard let observations = request.results as? [VNRecognizedTextObservation],
                   error == nil else { return }
 
-            // Take the top recognized strings, which are often the title
             let recognizedStrings = observations
                 .compactMap { $0.topCandidates(1).first?.string }
 
-            // Use the largest text block (heuristic: first few lines are often the title)
             let suggestedTitle = recognizedStrings.prefix(3).joined(separator: " ")
 
             DispatchQueue.main.async {
@@ -373,7 +386,6 @@ struct DocumentScannerView: UIViewControllerRepresentable {
             _ controller: VNDocumentCameraViewController,
             didFinishWith scan: VNDocumentCameraScan
         ) {
-            // Use the first scanned page as the cover
             if scan.pageCount > 0 {
                 let image = scan.imageOfPage(at: 0)
                 onScan(image)

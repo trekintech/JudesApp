@@ -1,53 +1,51 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showParentMode = false
-    @State private var parentPINEntry = ""
-    @State private var showPINPrompt = false
-
-    private let parentPIN = "1234"
+    @State private var showAddBook = false
+    @State private var showManageLibrary = false
+    @State private var showMathChallenge = false
 
     var body: some View {
         NavigationStack {
-            StoryGridView()
+            StoryGridView(onAddBook: { showAddBook = true })
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            showPINPrompt = true
+                            showMathChallenge = true
                         } label: {
-                            Image(systemName: "gearshape.fill")
+                            Image(systemName: "trash.circle")
                                 .font(.title2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.ocean.opacity(0.5))
                         }
+                        .accessibilityLabel("Manage Library")
                     }
                 }
         }
-        .alert("Parent Mode", isPresented: $showPINPrompt) {
-            SecureField("Enter PIN", text: $parentPINEntry)
-                .keyboardType(.numberPad)
-            Button("Cancel", role: .cancel) {
-                parentPINEntry = ""
-            }
-            Button("Enter") {
-                if parentPINEntry == parentPIN {
-                    showParentMode = true
-                }
-                parentPINEntry = ""
-            }
-        } message: {
-            Text("Enter the parent PIN to add or manage books.")
-        }
-        .fullScreenCover(isPresented: $showParentMode) {
+        .tint(AppTheme.ocean)
+        .sheet(isPresented: $showAddBook) {
             NavigationStack {
-                ParentModeView()
+                AddBookView()
+            }
+            .tint(AppTheme.ocean)
+        }
+        .fullScreenCover(isPresented: $showMathChallenge) {
+            MathChallengeView {
+                showManageLibrary = true
+            }
+        }
+        .fullScreenCover(isPresented: $showManageLibrary) {
+            NavigationStack {
+                ManageLibraryView()
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
                             Button("Done") {
-                                showParentMode = false
+                                showManageLibrary = false
                             }
+                            .fontWeight(.semibold)
                         }
                     }
             }
+            .tint(AppTheme.ocean)
         }
     }
 }

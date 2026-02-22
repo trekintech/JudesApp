@@ -1,59 +1,54 @@
 import SwiftUI
 import SwiftData
 
-struct ParentModeView: View {
+struct ManageLibraryView: View {
     @Query(sort: \StoryBook.creationDate, order: .reverse) private var books: [StoryBook]
     @Environment(\.modelContext) private var modelContext
-    @State private var showAddBook = false
     @State private var bookToDelete: StoryBook?
 
     var body: some View {
         List {
-            Section {
-                Button {
-                    showAddBook = true
-                } label: {
-                    Label("Add New Book", systemImage: "plus.circle.fill")
-                        .font(.headline)
+            if books.isEmpty {
+                Section {
+                    ContentUnavailableView(
+                        "No Books",
+                        systemImage: "book.closed",
+                        description: Text("Add a book from the main screen first.")
+                    )
                 }
-            }
-
-            Section("Library (\(books.count) books)") {
-                ForEach(books) { book in
-                    HStack(spacing: 16) {
-                        bookThumbnail(book)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(book.title)
-                                .font(.headline)
-                            Text("\(book.timedWords.count) words transcribed")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(book.creationDate, style: .date)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+            } else {
+                Section("Library (\(books.count) books)") {
+                    ForEach(books) { book in
+                        HStack(spacing: 16) {
+                            bookThumbnail(book)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(book.title)
+                                    .font(.headline)
+                                Text("\(book.timedWords.count) words transcribed")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(book.creationDate, style: .date)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            Spacer()
+                            if book.audioRecordingURL != nil {
+                                Image(systemName: "waveform.circle.fill")
+                                    .foregroundStyle(AppTheme.ocean)
+                            }
                         }
-                        Spacer()
-                        if book.audioRecordingURL != nil {
-                            Image(systemName: "waveform.circle.fill")
-                                .foregroundStyle(.green)
-                        }
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            bookToDelete = book
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                bookToDelete = book
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
         }
-        .navigationTitle("Parent Mode")
-        .sheet(isPresented: $showAddBook) {
-            NavigationStack {
-                AddBookView()
-            }
-        }
+        .navigationTitle("Manage Library")
         .alert("Delete Book?", isPresented: .init(
             get: { bookToDelete != nil },
             set: { if !$0 { bookToDelete = nil } }
@@ -85,11 +80,11 @@ struct ParentModeView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
         } else {
             RoundedRectangle(cornerRadius: 6)
-                .fill(.quaternary)
+                .fill(AppTheme.pale)
                 .frame(width: 50, height: 65)
                 .overlay {
                     Image(systemName: "book.closed")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.ocean.opacity(0.4))
                 }
         }
     }

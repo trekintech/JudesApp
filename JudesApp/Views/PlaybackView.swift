@@ -5,39 +5,22 @@ struct PlaybackView: View {
 
     @State private var audioManager = AudioManager()
     @State private var showSleepTimerPicker = false
-    @State private var selectedSleepMinutes = 15
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
-            backgroundGradient
+            AppTheme.nightBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar
-                HStack {
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(.white)
-                    }
-                    Spacer()
-                    Button { showSleepTimerPicker = true } label: {
-                        Image(systemName: "moon.zzz.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.top, 16)
+                topBar
+                    .padding(.horizontal, 32)
+                    .padding(.top, 16)
 
-                // Main content - iPad landscape optimized
+                // iPad landscape: cover left, words+controls right
                 HStack(spacing: 40) {
-                    // Left: Cover art
                     coverArt
                         .frame(maxWidth: 360, maxHeight: 480)
 
-                    // Right: Words + Controls
                     VStack(spacing: 24) {
                         karaokeText
                             .frame(maxHeight: .infinity)
@@ -66,18 +49,32 @@ struct PlaybackView: View {
         }
     }
 
-    // MARK: - Background
+    // MARK: - Top Bar
 
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.15, green: 0.10, blue: 0.30),
-                Color(red: 0.05, green: 0.05, blue: 0.15)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
+    private var topBar: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(AppTheme.soft)
+            }
+
+            Spacer()
+
+            Text(book.title)
+                .font(.system(.title3, design: .rounded, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+
+            Spacer()
+
+            Button { showSleepTimerPicker = true } label: {
+                Image(systemName: "moon.zzz.fill")
+                    .font(.title2)
+                    .foregroundStyle(AppTheme.warm)
+            }
+        }
     }
 
     // MARK: - Cover Art
@@ -92,7 +89,13 @@ struct PlaybackView: View {
             } else {
                 ZStack {
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
+                        .fill(
+                            LinearGradient(
+                                colors: [AppTheme.sky.opacity(0.4), AppTheme.ocean.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                     Image(systemName: "book.closed.fill")
                         .font(.system(size: 80))
                         .foregroundStyle(.white.opacity(0.5))
@@ -100,7 +103,7 @@ struct PlaybackView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
+        .shadow(color: AppTheme.ocean.opacity(0.4), radius: 20, y: 10)
     }
 
     // MARK: - Karaoke Text
@@ -124,7 +127,7 @@ struct PlaybackView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial.opacity(0.5))
+                .fill(.white.opacity(0.06))
         )
     }
 
@@ -132,34 +135,31 @@ struct PlaybackView: View {
 
     private var playbackControls: some View {
         HStack(spacing: 48) {
-            // Rewind
             Button {
                 audioManager.rewind(seconds: 10)
             } label: {
                 Image(systemName: "gobackward.10")
                     .font(.system(size: 36))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.soft)
             }
 
-            // Play / Pause
             Button {
                 audioManager.togglePlayback()
             } label: {
                 Image(systemName: audioManager.playbackState == .playing
                       ? "pause.circle.fill"
                       : "play.circle.fill")
-                    .font(.system(size: 72))
+                    .font(.system(size: 76))
                     .foregroundStyle(.white)
                     .symbolRenderingMode(.hierarchical)
             }
 
-            // Forward
             Button {
                 audioManager.seek(to: audioManager.currentTime + 10)
             } label: {
                 Image(systemName: "goforward.10")
                     .font(.system(size: 36))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(AppTheme.soft)
             }
         }
     }
@@ -171,11 +171,11 @@ struct PlaybackView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(.white.opacity(0.2))
+                        .fill(AppTheme.soft.opacity(0.2))
                         .frame(height: 6)
 
                     Capsule()
-                        .fill(.white)
+                        .fill(AppTheme.sky)
                         .frame(
                             width: audioManager.duration > 0
                                 ? geo.size.width * (audioManager.currentTime / audioManager.duration)
@@ -200,7 +200,7 @@ struct PlaybackView: View {
                 Text(formatTime(audioManager.duration))
             }
             .font(.caption)
-            .foregroundStyle(.white.opacity(0.6))
+            .foregroundStyle(AppTheme.soft.opacity(0.6))
         }
         .padding(.bottom, 16)
     }
