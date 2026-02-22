@@ -8,6 +8,7 @@ final class SelfieManager {
     private let fileManager = FileManager.default
     private let selfieFileName = "jude_selfie.jpg"
     private let hasCompletedSetupKey = "hasCompletedSelfieSetup"
+    private let context = CIContext()
 
     private init() {}
 
@@ -29,8 +30,8 @@ final class SelfieManager {
     }
 
     func saveSelfie(_ image: UIImage) {
-        // Crop to square centered on face area, then apply comic filter
-        let squared = cropToSquare(image)
+        let normalized = normalizeOrientation(image)
+        let squared = cropToSquare(normalized)
         let styled = applyComicStyle(squared)
         if let data = styled.jpegData(compressionQuality: 0.85) {
             try? data.write(to: selfieURL, options: .atomic)
@@ -44,6 +45,17 @@ final class SelfieManager {
 
     // MARK: - Image Processing
 
+    /// Redraws the image with .up orientation so CGImage operations don't flip it
+    private func normalizeOrientation(_ image: UIImage) -> UIImage {
+        guard image.imageOrientation != .up else { return image }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+        return renderer.image { _ in
+            image.draw(at: .zero)
+        }
+    }
+
     private func cropToSquare(_ image: UIImage) -> UIImage {
         guard let cgImage = image.cgImage else { return image }
         let side = min(cgImage.width, cgImage.height)
@@ -51,25 +63,22 @@ final class SelfieManager {
         let yOffset = (cgImage.height - side) / 2
         let cropRect = CGRect(x: xOffset, y: yOffset, width: side, height: side)
         guard let cropped = cgImage.cropping(to: cropRect) else { return image }
-        return UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
+        return UIImage(cgImage: cropped, scale: image.scale, orientation: .up)
     }
 
-    /// Applies a posterize + vibrant look to make the selfie feel cartoon/emoji-like
+    /// Applies CIComicEffect for a true cartoon/comic-book look
     func applyComicStyle(_ image: UIImage) -> UIImage {
         guard let ciImage = CIImage(image: image) else { return image }
-        let context = CIContext()
 
-        // Posterize for cartoon effect
-        let posterize = CIFilter.colorPosterize()
-        posterize.inputImage = ciImage
-        posterize.levels = 8
+        let comic = CIFilter.comicEffect()
+        comic.inputImage = ciImage
 
-        guard let posterized = posterize.outputImage else { return image }
+        guard let comicOutput = comic.outputImage else { return image }
 
-        // Boost vibrance
+        // Boost vibrance to make it pop
         let vibrance = CIFilter.vibrance()
-        vibrance.inputImage = posterized
-        vibrance.amount = 0.8
+        vibrance.inputImage = comicOutput
+        vibrance.amount = 0.6
 
         guard let output = vibrance.outputImage,
               let cgImage = context.createCGImage(output, from: output.extent) else {

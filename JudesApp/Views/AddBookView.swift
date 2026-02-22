@@ -63,6 +63,9 @@ struct AddBookView: View {
         } message: {
             Text(errorMessage ?? "An unknown error occurred.")
         }
+        .onAppear {
+            audioManager.warmUpRecognizer()
+        }
     }
 
     // MARK: - Cover Section

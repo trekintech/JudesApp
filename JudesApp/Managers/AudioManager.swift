@@ -42,6 +42,9 @@ final class AudioManager: NSObject {
     private var recordingTimer: Timer?
     private var currentRecordingURL: URL?
 
+    /// Persistent recognizer — avoids cold-start model loading on each transcription
+    private lazy var speechRecognizer: SFSpeechRecognizer? = SFSpeechRecognizer()
+
     // MARK: - Audio Session
 
     private func configureAudioSession(for category: AVAudioSession.Category) {
@@ -196,13 +199,22 @@ final class AudioManager: NSObject {
         currentTime = player.currentTime
     }
 
-    // MARK: - Speech Transcription (Offline)
+    // MARK: - Speech Transcription
+
+    /// Pre-warms the speech recognizer so the on-device model is loaded before
+    /// the user finishes recording. Call from AddBookView.onAppear.
+    func warmUpRecognizer() {
+        SFSpeechRecognizer.requestAuthorization { [weak self] _ in
+            // Access the lazy recognizer to trigger model loading
+            _ = self?.speechRecognizer?.isAvailable
+        }
+    }
 
     func transcribeAudio(
         at url: URL,
         completion: @escaping (Result<[TimedWord], Error>) -> Void
     ) {
-        guard let recognizer = SFSpeechRecognizer(),
+        guard let recognizer = speechRecognizer,
               recognizer.isAvailable else {
             completion(.failure(TranscriptionError.recognizerUnavailable))
             return
@@ -215,8 +227,14 @@ final class AudioManager: NSObject {
             }
 
             let request = SFSpeechURLRecognitionRequest(url: url)
-            request.requiresOnDeviceRecognition = true
             request.shouldReportPartialResults = false
+            request.addsPunctuation = false
+
+            // Prefer on-device but don't require it — server is faster and
+            // avoids the cold-start gap that drops the first ~20s of audio
+            if recognizer.supportsOnDeviceRecognition {
+                request.requiresOnDeviceRecognition = true
+            }
 
             recognizer.recognitionTask(with: request) { result, error in
                 if let error {
