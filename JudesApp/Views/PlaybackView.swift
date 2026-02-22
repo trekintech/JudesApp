@@ -5,6 +5,7 @@ struct PlaybackView: View {
 
     @State private var audioManager = AudioManager()
     @State private var showSleepTimerPicker = false
+    @State private var showCelebration = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -32,11 +33,27 @@ struct PlaybackView: View {
                 }
                 .padding(32)
             }
+
+            // Celebration overlay
+            if showCelebration {
+                StoryCelebrationView {
+                    withAnimation { showCelebration = false }
+                    dismiss()
+                }
+                .transition(.opacity)
+            }
         }
         .onAppear(perform: beginPlayback)
         .onDisappear {
             audioManager.stopPlayback()
             audioManager.cancelSleepTimer()
+        }
+        .onChange(of: audioManager.didFinishStory) { _, finished in
+            if finished {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showCelebration = true
+                }
+            }
         }
         .alert("Sleep Timer", isPresented: $showSleepTimerPicker) {
             Button("5 minutes") { audioManager.startSleepTimer(minutes: 5) }
@@ -216,5 +233,90 @@ struct PlaybackView: View {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
+// MARK: - Story Celebration Overlay
+
+struct StoryCelebrationView: View {
+    var onDismiss: () -> Void
+
+    @State private var confettiVisible = false
+    @State private var overlayOpacity = 0.0
+
+    var body: some View {
+        ZStack {
+            // Dim background
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+
+            VStack(spacing: 32) {
+                // Confetti-style stars
+                if confettiVisible {
+                    ConfettiStars()
+                        .frame(height: 120)
+                }
+
+                AvatarView(mood: .thumbsUp, size: 120, showGreeting: true)
+
+                Button {
+                    onDismiss()
+                } label: {
+                    Text("Back to Stories")
+                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .padding(.horizontal, 36)
+                        .padding(.vertical, 14)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.warm)
+            }
+            .opacity(overlayOpacity)
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6)) {
+                overlayOpacity = 1.0
+            }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.2)) {
+                confettiVisible = true
+            }
+        }
+    }
+}
+
+// MARK: - Confetti Stars
+
+struct ConfettiStars: View {
+    @State private var animate = false
+
+    private let stars = (0..<12).map { _ in
+        (
+            x: CGFloat.random(in: -150...150),
+            y: CGFloat.random(in: -60...60),
+            size: CGFloat.random(in: 14...30),
+            rotation: Double.random(in: 0...360),
+            delay: Double.random(in: 0...0.4)
+        )
+    }
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<stars.count, id: \.self) { i in
+                let star = stars[i]
+                Image(systemName: "star.fill")
+                    .font(.system(size: star.size))
+                    .foregroundStyle(
+                        [AppTheme.warm, AppTheme.sky, .yellow, .orange, .pink][i % 5]
+                    )
+                    .rotationEffect(.degrees(animate ? star.rotation + 180 : star.rotation))
+                    .offset(x: star.x, y: animate ? star.y : star.y - 40)
+                    .opacity(animate ? 1 : 0)
+                    .scaleEffect(animate ? 1 : 0.3)
+                    .animation(
+                        .spring(response: 0.6, dampingFraction: 0.5).delay(star.delay),
+                        value: animate
+                    )
+            }
+        }
+        .onAppear { animate = true }
     }
 }

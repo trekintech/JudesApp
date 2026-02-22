@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>JudesApp needs camera access to scan book covers.</string>
+	<string>JudesApp needs camera access for your selfie avatar and to scan book covers.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>JudesApp needs microphone access to record you reading stories.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

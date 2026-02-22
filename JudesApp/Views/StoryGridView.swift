@@ -22,6 +22,14 @@ struct StoryGridView: View {
             }
         }
         .navigationTitle("Jude's Stories")
+        .safeAreaInset(edge: .top) {
+            if SelfieManager.shared.hasCompletedSetup {
+                AvatarView(mood: .wave, size: 56, showGreeting: true)
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
         .toolbarBackground(AppTheme.pale, for: .navigationBar)
         .fullScreenCover(item: $selectedBook) { book in
             PlaybackView(book: book)

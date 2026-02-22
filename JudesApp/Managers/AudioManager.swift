@@ -18,6 +18,7 @@ final class AudioManager: NSObject {
 
     private(set) var recordingState: RecordingState = .idle
     private(set) var playbackState: PlaybackState = .idle
+    private(set) var didFinishStory = false
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
     private(set) var recordingDuration: TimeInterval = 0
@@ -124,6 +125,7 @@ final class AudioManager: NSObject {
 
     func startPlayback(url: URL, timedWords: [TimedWord]) {
         stopPlayback()
+        didFinishStory = false
         configureAudioSession(for: .playback)
 
         do {
@@ -290,6 +292,9 @@ extension AudioManager: AVAudioPlayerDelegate {
         playbackState = .idle
         currentTime = 0
         stopDisplayLink()
+        if flag {
+            didFinishStory = true
+        }
     }
 }
 
